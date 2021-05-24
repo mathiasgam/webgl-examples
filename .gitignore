@@ -1,7 +1,9 @@
-**.*
+# ignore everything as a default
+*.*
 
+# include git files
 !.gitignore
-!package.json
-!tsconfig.json
+!LICENSE
+!README.md
 
-!src/**.*
+!src/**/*.ts
