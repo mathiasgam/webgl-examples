@@ -1,9 +1,17 @@
 # ignore everything as a default
 *.*
 
+node_modules/
+dist/
+
 # include git files
 !.gitignore
 !LICENSE
 !README.md
 
+!package.json
+!tsconfig.json
+
+!src/**/*.html
+!src/**/*.css
 !src/**/*.ts
