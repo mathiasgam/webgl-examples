@@ -66,11 +66,7 @@ class App {
         gl.linkProgram(this.program);
         gl.useProgram(this.program);
 
-        // #### Vertex data ####
-        const index_data = new Uint32Array([0,1,2, 0,2,3]);
-        const vertex_data = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]);
-
-        this.mesh = new Mesh(gl, vertex_data, index_data);
+        this.mesh = Mesh.CenteredQuad(gl);
     }
 
     public Update() {

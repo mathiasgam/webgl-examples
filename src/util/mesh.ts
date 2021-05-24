@@ -60,4 +60,18 @@ export class Mesh {
         }
         return buffer as WebGLBuffer;
     }
+
+    public static CenteredQuad(gl: WebGL2RenderingContext): Mesh {
+        const indices = new Uint32Array([0,1,2, 0,2,3]);
+        const vertices = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]);
+        return new Mesh(gl, vertices, indices);
+    }
+
+    public static CenteredCube(gl: WebGL2RenderingContext): Mesh {
+        const indices = new Uint32Array([0,1,2, 0,2,3]);
+        const vertices = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]);
+        return new Mesh(gl, vertices, indices);
+    }
+
+
 }
