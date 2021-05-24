@@ -4,6 +4,7 @@ class App {
 
     private vbo : WebGLBuffer;
     private ebo : WebGLBuffer;
+    private vao : WebGLVertexArrayObject;
     private program : WebGLProgram;
 
     private readonly shader_prefix = `#version 300 es
@@ -60,11 +61,33 @@ class App {
         return program as WebGLProgram;
     }
 
-    public constructor(private gl: WebGL2RenderingContext) {
+    private createVertexArrayObject(gl: WebGL2RenderingContext): WebGLVertexArrayObject {
+        const vao = gl.createVertexArray();
+        if (vao === null) {
+            throw new Error('Failed to create Vertex Array Object');
+        }
+        return vao as WebGLVertexArrayObject;
+    }
+
+    public constructor(private gl: WebGL2RenderingContext, width: number, height: number) {
+
+        gl.enable(WebGLRenderingContext.DEPTH_TEST);
+        gl.viewport(0, 0, width, height);
 
         gl.clearColor(.2,.4,.6,1.0);
-        gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT);
+        gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+
+        // #### Shader program ####
+        this.program = this.createProgram(gl);
+        gl.attachShader(this.program, this.createVertexShader(gl));
+        gl.attachShader(this.program, this.createFragmentShader(gl));
+        gl.linkProgram(this.program);
+        gl.useProgram(this.program);
         
+        // #### bind shader attributes ####
+        this.vao = this.createVertexArrayObject(gl);
+        gl.bindVertexArray(this.vao);
+
         // #### Vertex data ####
         const index_data = new Uint32Array([0,1,2, 0,2,3]);
         const vertex_data = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]);
@@ -77,24 +100,22 @@ class App {
         gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.ebo);
         gl.bufferData(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, index_data, WebGLRenderingContext.STATIC_DRAW);
         
-        // #### Shader program ####
-        this.program = this.createProgram(gl);
-        gl.attachShader(this.program, this.createVertexShader(gl));
-        gl.attachShader(this.program, this.createFragmentShader(gl));
-        gl.linkProgram(this.program);
-        
-        gl.useProgram(this.program);
-        
-        // #### bind shader attributes ####
+
         const locationPosition = gl.getAttribLocation(this.program, 'aPosition');
         gl.vertexAttribPointer(locationPosition, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(locationPosition);
-        
-        gl.drawElements(WebGLRenderingContext.TRIANGLES, index_data.length, gl.UNSIGNED_INT, 0);
+
+        gl.bindVertexArray(null);
+        gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, null);
+        gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, null);
     }
 
-    public run() {
-
+    public Update() {
+        const gl = this.gl;
+        
+        gl.bindVertexArray(this.vao);
+        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+        gl.bindVertexArray(null);
     }
 
     public destroy() {
@@ -112,6 +133,6 @@ class App {
 window.onload = () => {
     const canvas : HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
     const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
-    const app = new App(gl);
-    app.run();
+    const app = new App(gl, canvas.width, canvas.height);
+    app.Update();
 }
