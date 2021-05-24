@@ -1,11 +1,9 @@
-
+import { Mesh } from "./util/mesh";
 
 class App {
 
-    private vbo : WebGLBuffer;
-    private ebo : WebGLBuffer;
-    private vao : WebGLVertexArrayObject;
     private program : WebGLProgram;
+    private mesh: Mesh;
 
     private readonly shader_prefix = `#version 300 es
     precision mediump float;`
@@ -45,28 +43,12 @@ class App {
         return this.createShader(gl, WebGLRenderingContext.FRAGMENT_SHADER, this.shader_prefix + this.fragment_source);
     }
 
-    private createBuffer(gl: WebGL2RenderingContext): WebGLBuffer {
-        const buffer = gl.createBuffer();
-        if (buffer === null) {
-            throw new Error('Failed to create buffer');
-        }
-        return buffer as WebGLBuffer;
-    }
-
     private createProgram(gl: WebGL2RenderingContext) {
         const program = gl.createProgram();
         if (program === null) {
             throw new Error('Failed to create program');
         }
         return program as WebGLProgram;
-    }
-
-    private createVertexArrayObject(gl: WebGL2RenderingContext): WebGLVertexArrayObject {
-        const vao = gl.createVertexArray();
-        if (vao === null) {
-            throw new Error('Failed to create Vertex Array Object');
-        }
-        return vao as WebGLVertexArrayObject;
     }
 
     public constructor(private gl: WebGL2RenderingContext, width: number, height: number) {
@@ -83,49 +65,25 @@ class App {
         gl.attachShader(this.program, this.createFragmentShader(gl));
         gl.linkProgram(this.program);
         gl.useProgram(this.program);
-        
-        // #### bind shader attributes ####
-        this.vao = this.createVertexArrayObject(gl);
-        gl.bindVertexArray(this.vao);
 
         // #### Vertex data ####
         const index_data = new Uint32Array([0,1,2, 0,2,3]);
         const vertex_data = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]);
 
-        this.vbo = this.createBuffer(gl);
-        gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vbo);
-        gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertex_data, WebGLRenderingContext.STATIC_DRAW);
-
-        this.ebo = this.createBuffer(gl);
-        gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.ebo);
-        gl.bufferData(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, index_data, WebGLRenderingContext.STATIC_DRAW);
-        
-
-        const locationPosition = gl.getAttribLocation(this.program, 'aPosition');
-        gl.vertexAttribPointer(locationPosition, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(locationPosition);
-
-        gl.bindVertexArray(null);
-        gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, null);
-        gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, null);
+        this.mesh = new Mesh(gl, vertex_data, index_data);
     }
 
     public Update() {
         const gl = this.gl;
-        
-        gl.bindVertexArray(this.vao);
-        gl.drawElements(WebGLRenderingContext.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
-        gl.bindVertexArray(null);
+
+        this.mesh.bind();
+        gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, gl.UNSIGNED_INT, 0);
+        this.mesh.unbind();
     }
 
     public destroy() {
-        if (this.gl) {   
-            if (this.vbo) {
-                this.gl.deleteBuffer(this.vbo);
-            }
-            if (this.ebo) {
-                this.gl.deleteBuffer(this.ebo);
-            }
+        if (this.mesh) {
+            this.mesh.delete();
         }
     }
 }
