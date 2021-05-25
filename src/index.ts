@@ -10,24 +10,28 @@ class App {
 
     private lastFrame = 0;
     private t = 0;
-    private transform: vec3;
     private color: vec3;
 
     private readonly shader_prefix = `#version 300 es
     precision mediump float;`
     private readonly vertex_source = `
-    in vec3 aPosition;
+    in vec3 a_position;
 
     uniform mat4 u_transform;
+
+    out vec3 v_color;
     
     void main() {
-        gl_Position = u_transform * vec4(aPosition.xyz * 0.5, 1.0);
+        gl_Position = u_transform * vec4(a_position.xyz * 0.5, 1.0);
+        v_color = a_position * 0.25 + 0.5;
     }`
     private readonly fragment_source = `
     out vec4 FragColor;
+
+    in vec3 v_color;
     
     void main() {
-        FragColor = vec4(0.3, 0.8, 0.3, 1.0);
+        FragColor = vec4(v_color, 1.0);
     }`
     
     private createShader(gl: WebGL2RenderingContext, type: number, source: string) {
@@ -94,7 +98,6 @@ class App {
         this.transformLocation = this.getUniformLocation(gl, this.program, 'u_transform');
 
         this.mesh = Mesh.CenteredCube(gl);
-        this.transform = vec3.fromValues(0.25,0,0);
         this.color = vec3.fromValues(.3,.5,.6);
     }
 
@@ -104,8 +107,7 @@ class App {
         const delta = (timestamp - this.lastFrame) * 0.001;
         this.lastFrame = timestamp;
 
-        this.t = this.t + delta;
-        this.transform = vec3.fromValues(Math.sin(this.t), 0,0);
+        this.t += delta;
 
         const transform = mat4.create();
         mat4.rotateX(transform, transform, this.t);
