@@ -1,3 +1,4 @@
+import { vec3 } from "gl-matrix"
 import { Mesh } from "./util/mesh";
 
 class App {
@@ -5,13 +6,22 @@ class App {
     private program : WebGLProgram;
     private mesh: Mesh;
 
+    private transformLocation: WebGLUniformLocation;
+
+    private lastFrame = 0;
+    private t = 0;
+    private transform: vec3;
+    private color: vec3;
+
     private readonly shader_prefix = `#version 300 es
     precision mediump float;`
     private readonly vertex_source = `
     in vec3 aPosition;
+
+    uniform vec3 u_offset;
     
     void main() {
-        gl_Position = vec4(aPosition.xyz * 0.5, 1.0);
+        gl_Position = vec4(aPosition.xyz * 0.5 + u_offset, 1.0);
     }`
     private readonly fragment_source = `
     out vec4 FragColor;
@@ -51,6 +61,21 @@ class App {
         return program as WebGLProgram;
     }
 
+    private getUniformLocation(gl: WebGLRenderingContext, program: WebGLProgram, name: string): WebGLUniformLocation {
+        const location = gl.getUniformLocation(program, name);
+        if (location === null) {
+            throw new Error('Failed to find uniform: "' + name + '"');
+        }
+        return location;
+    }
+
+    private checkGLError(gl: WebGLRenderingContext) {
+        const err = gl.getError();
+        if (err) {
+            throw new Error('WebGL Error: ' + err);
+        }
+    }
+
     public constructor(private gl: WebGL2RenderingContext, width: number, height: number) {
 
         gl.enable(WebGLRenderingContext.DEPTH_TEST);
@@ -64,17 +89,36 @@ class App {
         gl.attachShader(this.program, this.createVertexShader(gl));
         gl.attachShader(this.program, this.createFragmentShader(gl));
         gl.linkProgram(this.program);
-        gl.useProgram(this.program);
+        this.checkGLError(gl);
+
+        this.transformLocation = this.getUniformLocation(gl, this.program, 'u_offset');
 
         this.mesh = Mesh.CenteredQuad(gl);
+        this.transform = vec3.fromValues(0.25,0,0);
+        this.color = vec3.fromValues(.3,.5,.6);
     }
 
-    public Update() {
+    public Update(timestamp: number) {
         const gl = this.gl;
+
+        const delta = (timestamp - this.lastFrame) * 0.001;
+        this.lastFrame = timestamp;
+
+        this.t = this.t + delta;
+        this.transform = vec3.fromValues(Math.sin(this.t), 0,0);
+
+        gl.clearColor(this.color[0], this.color[1], this.color[2], 1.0);
+        gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(this.program);
+        gl.uniform3fv(this.transformLocation, this.transform);
 
         this.mesh.bind();
         gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, gl.UNSIGNED_INT, 0);
         this.mesh.unbind();
+
+        gl.useProgram(null);
+        requestAnimationFrame(this.Update.bind(this));
     }
 
     public destroy() {
@@ -88,5 +132,5 @@ window.onload = () => {
     const canvas : HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
     const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
     const app = new App(gl, canvas.width, canvas.height);
-    app.Update();
+    requestAnimationFrame(app.Update.bind(app));
 }
