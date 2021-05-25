@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix"
+import { vec3, mat4 } from "gl-matrix"
 import { Mesh } from "./util/mesh";
 
 class App {
@@ -18,10 +18,10 @@ class App {
     private readonly vertex_source = `
     in vec3 aPosition;
 
-    uniform vec3 u_offset;
+    uniform mat4 u_transform;
     
     void main() {
-        gl_Position = vec4(aPosition.xyz * 0.5 + u_offset, 1.0);
+        gl_Position = u_transform * vec4(aPosition.xyz * 0.5, 1.0);
     }`
     private readonly fragment_source = `
     out vec4 FragColor;
@@ -91,9 +91,9 @@ class App {
         gl.linkProgram(this.program);
         this.checkGLError(gl);
 
-        this.transformLocation = this.getUniformLocation(gl, this.program, 'u_offset');
+        this.transformLocation = this.getUniformLocation(gl, this.program, 'u_transform');
 
-        this.mesh = Mesh.CenteredQuad(gl);
+        this.mesh = Mesh.CenteredCube(gl);
         this.transform = vec3.fromValues(0.25,0,0);
         this.color = vec3.fromValues(.3,.5,.6);
     }
@@ -107,11 +107,16 @@ class App {
         this.t = this.t + delta;
         this.transform = vec3.fromValues(Math.sin(this.t), 0,0);
 
+        const transform = mat4.create();
+        mat4.rotateX(transform, transform, this.t);
+        mat4.rotateY(transform, transform, this.t * 0.5);
+        mat4.rotateZ(transform, transform, this.t * 0.2);
+
         gl.clearColor(this.color[0], this.color[1], this.color[2], 1.0);
         gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
 
         gl.useProgram(this.program);
-        gl.uniform3fv(this.transformLocation, this.transform);
+        gl.uniformMatrix4fv(this.transformLocation, false, transform);
 
         this.mesh.bind();
         gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, gl.UNSIGNED_INT, 0);

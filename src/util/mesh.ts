@@ -68,8 +68,30 @@ export class Mesh {
     }
 
     public static CenteredCube(gl: WebGL2RenderingContext): Mesh {
-        const indices = new Uint32Array([0,1,2, 0,2,3]);
-        const vertices = new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]);
+        const indices = new Uint32Array([
+            1, 2, 3,
+            7, 6, 5,
+            4, 5, 1,
+            5, 6, 2,
+            2, 6, 7,
+            0, 3, 7,
+            0, 1, 3,
+            6, 7, 5,
+            0, 4, 1,
+            1, 5, 2,
+            3, 2, 7,
+            4, 0, 7
+        ]);
+        const vertices = new Float32Array([
+             1,-1,-1,
+             1,-1, 1,
+            -1,-1, 1,
+            -1,-1,-1,
+             1, 1,-1,
+             1, 1, 1,
+            -1, 1, 1,
+            -1, 1,-1,
+        ]);
         return new Mesh(gl, vertices, indices);
     }
 
