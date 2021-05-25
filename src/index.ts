@@ -7,10 +7,14 @@ class App {
     private mesh: Mesh;
 
     private transformLocation: WebGLUniformLocation;
+    private projectionLocation: WebGLUniformLocation;
 
     private lastFrame = 0;
     private t = 0;
     private color: vec3;
+
+    private width: number;
+    private height: number;
 
     private readonly shader_prefix = `#version 300 es
     precision mediump float;`
@@ -18,11 +22,12 @@ class App {
     in vec3 a_position;
 
     uniform mat4 u_transform;
+    uniform mat4 u_projection;
 
     out vec3 v_color;
     
     void main() {
-        gl_Position = u_transform * vec4(a_position.xyz * 0.5, 1.0);
+        gl_Position = u_projection * u_transform * vec4(a_position.xyz * 0.5, 1.0);
         v_color = a_position * 0.25 + 0.5;
     }`
     private readonly fragment_source = `
@@ -96,9 +101,13 @@ class App {
         this.checkGLError(gl);
 
         this.transformLocation = this.getUniformLocation(gl, this.program, 'u_transform');
+        this.projectionLocation = this.getUniformLocation(gl, this.program, 'u_projection');
 
         this.mesh = Mesh.CenteredCube(gl);
         this.color = vec3.fromValues(.3,.5,.6);
+
+        this.width = width;
+        this.height = height;
     }
 
     public Update(timestamp: number) {
@@ -109,15 +118,23 @@ class App {
 
         this.t += delta;
 
+        const fov = (Math.PI / 180) * 70;
+        const projection = mat4.perspective(mat4.create(), fov, this.width / this.height, 0.1, 1000);
+        const view = mat4.lookAt(mat4.create(), vec3.fromValues(3,0,0), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
+        const viewProjection = mat4.mul(mat4.create(), projection, view);
+        
+
         const transform = mat4.create();
         mat4.rotateX(transform, transform, this.t);
         mat4.rotateY(transform, transform, this.t * 0.5);
         mat4.rotateZ(transform, transform, this.t * 0.2);
+        // mat4.scale(transform, transform, vec3.fromValues(100, 100, 100));
 
         gl.clearColor(this.color[0], this.color[1], this.color[2], 1.0);
         gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
 
         gl.useProgram(this.program);
+        gl.uniformMatrix4fv(this.projectionLocation, false, viewProjection);
         gl.uniformMatrix4fv(this.transformLocation, false, transform);
 
         this.mesh.bind();
