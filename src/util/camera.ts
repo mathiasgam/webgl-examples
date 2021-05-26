@@ -72,8 +72,8 @@ export class Camera {
         if (this._viewChanged) {
             const res = mat4.create();
             mat4.translate(res, res, this._position);
-            mat4.rotateX(res, res, this._pitch);
             mat4.rotateY(res, res, this._yaw);
+            mat4.rotateX(res, res, this._pitch);
             mat4.invert(this._view, res);
 
             this._viewChanged = false;
