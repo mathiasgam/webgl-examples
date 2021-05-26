@@ -20,7 +20,7 @@ class App {
     private readonly shader_prefix = `#version 300 es
     precision mediump float;`
     private readonly vertex_source = `
-    in vec3 a_position;
+    layout(location = 0) in vec3 a_position;
 
     uniform mat4 u_transform;
     uniform mat4 u_projection;
@@ -28,13 +28,13 @@ class App {
     out vec3 v_color;
     
     void main() {
-        gl_Position = u_projection * u_transform * vec4(a_position.xyz * 0.5, 1.0);
+        gl_Position = u_projection * u_transform * vec4(a_position.xyz, 1.0);
         v_color = a_position * 0.25 + 0.5;
     }`
     private readonly fragment_source = `
-    out vec4 FragColor;
-
     in vec3 v_color;
+    
+    layout(location = 0) out vec4 FragColor;
     
     void main() {
         FragColor = vec4(v_color, 1.0);
@@ -50,6 +50,7 @@ class App {
     public constructor(private gl: WebGL2RenderingContext, width: number, height: number) {
 
         gl.enable(WebGLRenderingContext.DEPTH_TEST);
+        gl.enable(WebGLRenderingContext.CULL_FACE)
         gl.viewport(0, 0, width, height);
 
         gl.clearColor(.2,.4,.6,1.0);
