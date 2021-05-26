@@ -8119,7 +8119,131 @@ exports.vec4 = vec4;
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-},{"./common.js":"../node_modules/gl-matrix/esm/common.js","./mat2.js":"../node_modules/gl-matrix/esm/mat2.js","./mat2d.js":"../node_modules/gl-matrix/esm/mat2d.js","./mat3.js":"../node_modules/gl-matrix/esm/mat3.js","./mat4.js":"../node_modules/gl-matrix/esm/mat4.js","./quat.js":"../node_modules/gl-matrix/esm/quat.js","./quat2.js":"../node_modules/gl-matrix/esm/quat2.js","./vec2.js":"../node_modules/gl-matrix/esm/vec2.js","./vec3.js":"../node_modules/gl-matrix/esm/vec3.js","./vec4.js":"../node_modules/gl-matrix/esm/vec4.js"}],"util/mesh.ts":[function(require,module,exports) {
+},{"./common.js":"../node_modules/gl-matrix/esm/common.js","./mat2.js":"../node_modules/gl-matrix/esm/mat2.js","./mat2d.js":"../node_modules/gl-matrix/esm/mat2d.js","./mat3.js":"../node_modules/gl-matrix/esm/mat3.js","./mat4.js":"../node_modules/gl-matrix/esm/mat4.js","./quat.js":"../node_modules/gl-matrix/esm/quat.js","./quat2.js":"../node_modules/gl-matrix/esm/quat2.js","./vec2.js":"../node_modules/gl-matrix/esm/vec2.js","./vec3.js":"../node_modules/gl-matrix/esm/vec3.js","./vec4.js":"../node_modules/gl-matrix/esm/vec4.js"}],"util/camera.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var gl_matrix_1 = require("gl-matrix");
+
+var Camera =
+/** @class */
+function () {
+  function Camera() {
+    this._near = 0.01;
+    this._far = 1000.0;
+    this._fov = 70;
+    this._viewChanged = true;
+    this._projectionChanged = true;
+    this._projection = gl_matrix_1.mat4.create();
+    this._view = gl_matrix_1.mat4.create();
+    this._position = gl_matrix_1.vec3.fromValues(0, 0, 0);
+    this._pitch = 0;
+    this._yaw = 0;
+  }
+
+  Object.defineProperty(Camera.prototype, "position", {
+    get: function get() {
+      return this._position;
+    },
+    set: function set(val) {
+      this._position = val;
+      this._viewChanged = true;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "pitch", {
+    get: function get() {
+      return this._pitch;
+    },
+    set: function set(val) {
+      this._pitch = val;
+      this._viewChanged = true;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "yaw", {
+    get: function get() {
+      return this._yaw;
+    },
+    set: function set(val) {
+      this._yaw = val;
+      this._viewChanged = true;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "near", {
+    get: function get() {
+      return this._yaw;
+    },
+    set: function set(val) {
+      this._near = val;
+      this._projectionChanged = true;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "far", {
+    get: function get() {
+      return this._far;
+    },
+    set: function set(val) {
+      this._far = val;
+      this._projectionChanged = true;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "fov", {
+    get: function get() {
+      return this._fov;
+    },
+    set: function set(val) {
+      this._fov = val;
+      this._projectionChanged = true;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "projection", {
+    get: function get() {
+      if (this._projectionChanged) {
+        // mat4.perspectiveFromFieldOfView(this._projection, this._fov, this._near, this._far);
+        gl_matrix_1.mat4.perspective(this._projection, this._fov, 720.0 / 512.0, this._near, this._far);
+        this._projectionChanged = false;
+      }
+
+      return gl_matrix_1.mat4.clone(this._projection);
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Camera.prototype, "view", {
+    get: function get() {
+      if (this._viewChanged) {
+        var res = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.translate(res, res, this._position);
+        gl_matrix_1.mat4.rotateX(res, res, this._pitch);
+        gl_matrix_1.mat4.rotateY(res, res, this._yaw);
+        gl_matrix_1.mat4.invert(this._view, res);
+        this._viewChanged = false;
+      }
+
+      return gl_matrix_1.mat4.clone(this._view);
+    },
+    enumerable: true,
+    configurable: true
+  });
+  return Camera;
+}();
+
+exports.Camera = Camera;
+},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js"}],"util/mesh.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8206,46 +8330,75 @@ function () {
 }();
 
 exports.Mesh = Mesh;
-},{}],"index.ts":[function(require,module,exports) {
+},{}],"util/Model.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var gl_matrix_1 = require("gl-matrix");
-
-var mesh_1 = require("./util/mesh");
-
-var App =
+var Model =
 /** @class */
 function () {
-  function App(gl, width, height) {
-    this.gl = gl;
-    this.lastFrame = 0;
-    this.t = 0;
-    this.shader_prefix = "#version 300 es\n    precision mediump float;";
-    this.vertex_source = "\n    in vec3 a_position;\n\n    uniform mat4 u_transform;\n    uniform mat4 u_projection;\n\n    out vec3 v_color;\n    \n    void main() {\n        gl_Position = u_projection * u_transform * vec4(a_position.xyz * 0.5, 1.0);\n        v_color = a_position * 0.25 + 0.5;\n    }";
-    this.fragment_source = "\n    out vec4 FragColor;\n\n    in vec3 v_color;\n    \n    void main() {\n        FragColor = vec4(v_color, 1.0);\n    }";
-    gl.enable(WebGLRenderingContext.DEPTH_TEST);
-    gl.viewport(0, 0, width, height);
-    gl.clearColor(.2, .4, .6, 1.0);
-    gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT); // #### Shader program ####
-
-    this.program = this.createProgram(gl);
-    gl.attachShader(this.program, this.createVertexShader(gl));
-    gl.attachShader(this.program, this.createFragmentShader(gl));
-    gl.linkProgram(this.program);
-    this.checkGLError(gl);
-    this.transformLocation = this.getUniformLocation(gl, this.program, 'u_transform');
-    this.projectionLocation = this.getUniformLocation(gl, this.program, 'u_projection');
-    this.mesh = mesh_1.Mesh.CenteredCube(gl);
-    this.color = gl_matrix_1.vec3.fromValues(.3, .5, .6);
-    this.width = width;
-    this.height = height;
+  function Model(mesh, transform) {
+    this.mesh = mesh;
+    this.transform = transform;
   }
 
-  App.prototype.createShader = function (gl, type, source) {
+  Model.prototype.render = function (gl) {
+    this.mesh.bind();
+    gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, WebGLRenderingContext.UNSIGNED_INT, 0);
+    this.mesh.unbind();
+  };
+
+  return Model;
+}();
+
+exports.Model = Model;
+},{}],"util/ShaderProgram.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var ShaderProgram =
+/** @class */
+function () {
+  function ShaderProgram(gl, vertexSource, fragmentSource) {
+    // Create Program
+    this.program = ShaderProgram.createProgram(gl); // Compile shaders
+
+    var vertex = ShaderProgram.createShader(gl, WebGLRenderingContext.VERTEX_SHADER, vertexSource);
+    var fragment = ShaderProgram.createShader(gl, WebGLRenderingContext.FRAGMENT_SHADER, fragmentSource); // Attach and link shaders to the program
+
+    gl.attachShader(this.program, vertex);
+    gl.attachShader(this.program, fragment);
+    gl.linkProgram(this.program); // Delete the shaders
+
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
+  }
+
+  Object.defineProperty(ShaderProgram.prototype, "value", {
+    get: function get() {
+      return this.program;
+    },
+    enumerable: true,
+    configurable: true
+  });
+
+  ShaderProgram.createProgram = function (gl) {
+    var program = gl.createProgram();
+
+    if (program === null) {
+      throw new Error('Failed to create WebGLProgram');
+    }
+
+    return program;
+  };
+
+  ShaderProgram.createShader = function (gl, type, source) {
     var shader = gl.createShader(type);
 
     if (shader === null) {
@@ -8263,26 +8416,16 @@ function () {
     return shader;
   };
 
-  App.prototype.createVertexShader = function (gl) {
-    return this.createShader(gl, WebGLRenderingContext.VERTEX_SHADER, this.shader_prefix + this.vertex_source);
+  ShaderProgram.prototype.bind = function (gl) {
+    gl.useProgram(this.program);
   };
 
-  App.prototype.createFragmentShader = function (gl) {
-    return this.createShader(gl, WebGLRenderingContext.FRAGMENT_SHADER, this.shader_prefix + this.fragment_source);
+  ShaderProgram.prototype.unbind = function (gl) {
+    gl.useProgram(null);
   };
 
-  App.prototype.createProgram = function (gl) {
-    var program = gl.createProgram();
-
-    if (program === null) {
-      throw new Error('Failed to create program');
-    }
-
-    return program;
-  };
-
-  App.prototype.getUniformLocation = function (gl, program, name) {
-    var location = gl.getUniformLocation(program, name);
+  ShaderProgram.prototype.getUniformLocation = function (gl, name) {
+    var location = gl.getUniformLocation(this.program, name);
 
     if (location === null) {
       throw new Error('Failed to find uniform: "' + name + '"');
@@ -8290,6 +8433,64 @@ function () {
 
     return location;
   };
+
+  ShaderProgram.prototype.delete = function (gl) {
+    gl.deleteProgram(this.program);
+  };
+
+  return ShaderProgram;
+}();
+
+exports.ShaderProgram = ShaderProgram;
+},{}],"index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var gl_matrix_1 = require("gl-matrix");
+
+var camera_1 = require("./util/camera");
+
+var mesh_1 = require("./util/mesh");
+
+var Model_1 = require("./util/Model");
+
+var ShaderProgram_1 = require("./util/ShaderProgram");
+
+var App =
+/** @class */
+function () {
+  function App(gl, width, height) {
+    this.gl = gl;
+    this.width = width;
+    this.height = height;
+    this.lastFrame = 0;
+    this.t = 0;
+    this.moveX = 0;
+    this.moveY = 0;
+    this.shader_prefix = "#version 300 es\n    precision mediump float;";
+    this.vertex_source = "\n    layout(location = 0) in vec3 a_position;\n\n    uniform mat4 u_transform;\n    uniform mat4 u_projection;\n\n    out vec3 v_color;\n    \n    void main() {\n        gl_Position = u_projection * u_transform * vec4(a_position.xyz, 1.0);\n        v_color = a_position * 0.25 + 0.5;\n    }";
+    this.fragment_source = "\n    in vec3 v_color;\n    \n    layout(location = 0) out vec4 FragColor;\n    \n    void main() {\n        FragColor = vec4(v_color, 1.0);\n    }";
+    gl.enable(WebGLRenderingContext.DEPTH_TEST);
+    gl.enable(WebGLRenderingContext.CULL_FACE);
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(.2, .4, .6, 1.0);
+    gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+    this.program = new ShaderProgram_1.ShaderProgram(gl, this.shader_prefix + this.vertex_source, this.shader_prefix + this.fragment_source);
+    this.checkGLError(gl);
+    this.transformLocation = this.program.getUniformLocation(gl, 'u_transform');
+    this.projectionLocation = this.program.getUniformLocation(gl, 'u_projection');
+    this.mesh = mesh_1.Mesh.CenteredCube(gl);
+    this.model = new Model_1.Model(this.mesh, gl_matrix_1.mat4.create());
+    this.color = gl_matrix_1.vec3.fromValues(.3, .5, .6);
+    this.camera = new camera_1.Camera();
+    this.camera.position = gl_matrix_1.vec3.fromValues(0, 0, 5);
+    this.camera.fov = 70;
+    this.width = width;
+    this.height = height;
+  }
 
   App.prototype.checkGLError = function (gl) {
     var err = gl.getError();
@@ -8304,31 +8505,37 @@ function () {
     var delta = (timestamp - this.lastFrame) * 0.001;
     this.lastFrame = timestamp;
     this.t += delta;
-    var fov = Math.PI / 180 * 70;
-    var projection = gl_matrix_1.mat4.perspective(gl_matrix_1.mat4.create(), fov, this.width / this.height, 0.1, 1000);
-    var view = gl_matrix_1.mat4.lookAt(gl_matrix_1.mat4.create(), gl_matrix_1.vec3.fromValues(3, 0, 0), gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(0, 1, 0));
-    var viewProjection = gl_matrix_1.mat4.mul(gl_matrix_1.mat4.create(), projection, view);
+    this.camera.yaw += 1.68 / this.width * this.moveX;
+    this.camera.pitch += 1.68 / this.height * this.moveY;
+    this.moveX = 0;
+    this.moveY = 0;
+    var viewProjection = gl_matrix_1.mat4.mul(gl_matrix_1.mat4.create(), this.camera.projection, this.camera.view);
     var transform = gl_matrix_1.mat4.create();
-    gl_matrix_1.mat4.rotateX(transform, transform, this.t);
-    gl_matrix_1.mat4.rotateY(transform, transform, this.t * 0.5);
-    gl_matrix_1.mat4.rotateZ(transform, transform, this.t * 0.2); // mat4.scale(transform, transform, vec3.fromValues(100, 100, 100));
-
     gl.clearColor(this.color[0], this.color[1], this.color[2], 1.0);
     gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
-    gl.useProgram(this.program);
+    this.program.bind(gl);
     gl.uniformMatrix4fv(this.projectionLocation, false, viewProjection);
     gl.uniformMatrix4fv(this.transformLocation, false, transform);
-    this.mesh.bind();
-    gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, gl.UNSIGNED_INT, 0);
-    this.mesh.unbind();
-    gl.useProgram(null);
+    this.model.render(gl);
+    this.program.unbind(gl);
     requestAnimationFrame(this.Update.bind(this));
   };
 
+  App.prototype.onMouseMoved = function (e) {
+    if (e.buttons === 1) {
+      this.moveX += e.movementX;
+      this.moveY += e.movementY;
+    }
+  };
+
   App.prototype.destroy = function () {
+    var gl = this.gl;
+
     if (this.mesh) {
       this.mesh.delete();
     }
+
+    this.program.delete(gl);
   };
 
   return App;
@@ -8339,8 +8546,9 @@ window.onload = function () {
   var gl = canvas.getContext('webgl2');
   var app = new App(gl, canvas.width, canvas.height);
   requestAnimationFrame(app.Update.bind(app));
+  canvas.addEventListener('mousemove', app.onMouseMoved.bind(app));
 };
-},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js","./util/mesh":"util/mesh.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js","./util/camera":"util/camera.ts","./util/mesh":"util/mesh.ts","./util/Model":"util/Model.ts","./util/ShaderProgram":"util/ShaderProgram.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -8368,7 +8576,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51285" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64200" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
