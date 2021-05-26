@@ -1,9 +1,10 @@
 import { vec3, mat4 } from "gl-matrix"
 import { Mesh } from "./util/mesh";
+import { ShaderProgram } from "./util/ShaderProgram";
 
 class App {
 
-    private program : WebGLProgram;
+    private program: ShaderProgram;
     private mesh: Mesh;
 
     private transformLocation: WebGLUniformLocation;
@@ -38,45 +39,6 @@ class App {
     void main() {
         FragColor = vec4(v_color, 1.0);
     }`
-    
-    private createShader(gl: WebGL2RenderingContext, type: number, source: string) {
-        const shader = gl.createShader(type);
-        if (shader === null) {
-            throw new Error('Failed to create shader');
-        }
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            var log = gl.getShaderInfoLog(shader);
-            throw new Error('FAILED to compile shader: ' + log);
-        }
-        return shader;
-    }
-    
-    private createVertexShader(gl: WebGL2RenderingContext) {
-        return this.createShader(gl, WebGLRenderingContext.VERTEX_SHADER, this.shader_prefix + this.vertex_source);
-    }
-
-    private createFragmentShader(gl: WebGL2RenderingContext) {
-        return this.createShader(gl, WebGLRenderingContext.FRAGMENT_SHADER, this.shader_prefix + this.fragment_source);
-    }
-
-    private createProgram(gl: WebGL2RenderingContext) {
-        const program = gl.createProgram();
-        if (program === null) {
-            throw new Error('Failed to create program');
-        }
-        return program as WebGLProgram;
-    }
-
-    private getUniformLocation(gl: WebGLRenderingContext, program: WebGLProgram, name: string): WebGLUniformLocation {
-        const location = gl.getUniformLocation(program, name);
-        if (location === null) {
-            throw new Error('Failed to find uniform: "' + name + '"');
-        }
-        return location;
-    }
 
     private checkGLError(gl: WebGLRenderingContext) {
         const err = gl.getError();
@@ -93,15 +55,11 @@ class App {
         gl.clearColor(.2,.4,.6,1.0);
         gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
 
-        // #### Shader program ####
-        this.program = this.createProgram(gl);
-        gl.attachShader(this.program, this.createVertexShader(gl));
-        gl.attachShader(this.program, this.createFragmentShader(gl));
-        gl.linkProgram(this.program);
+        this.program = new ShaderProgram(gl, this.shader_prefix + this.vertex_source, this.shader_prefix + this.fragment_source);
         this.checkGLError(gl);
 
-        this.transformLocation = this.getUniformLocation(gl, this.program, 'u_transform');
-        this.projectionLocation = this.getUniformLocation(gl, this.program, 'u_projection');
+        this.transformLocation = this.program.getUniformLocation(gl, 'u_transform');
+        this.projectionLocation = this.program.getUniformLocation(gl, 'u_projection');
 
         this.mesh = Mesh.CenteredCube(gl);
         this.color = vec3.fromValues(.3,.5,.6);
@@ -133,7 +91,7 @@ class App {
         gl.clearColor(this.color[0], this.color[1], this.color[2], 1.0);
         gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
 
-        gl.useProgram(this.program);
+        this.program.bind(gl);
         gl.uniformMatrix4fv(this.projectionLocation, false, viewProjection);
         gl.uniformMatrix4fv(this.transformLocation, false, transform);
 
@@ -141,14 +99,16 @@ class App {
         gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, gl.UNSIGNED_INT, 0);
         this.mesh.unbind();
 
-        gl.useProgram(null);
+        this.program.unbind(gl);
         requestAnimationFrame(this.Update.bind(this));
     }
 
     public destroy() {
+        const gl = this.gl;
         if (this.mesh) {
             this.mesh.delete();
         }
+        this.program.delete(gl);
     }
 }
 
