@@ -62,4 +62,8 @@ export class ShaderProgram {
         return location;
     }
 
+    public delete(gl: WebGLRenderingContext): void {
+        gl.deleteProgram(this.program);
+    }
+
 }
