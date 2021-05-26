@@ -9,7 +9,7 @@ class App {
     private program: ShaderProgram;
     private mesh: Mesh;
 
-    private model: Model;
+    private models: Model[] = [];
 
     private transformLocation: WebGLUniformLocation;
     private projectionLocation: WebGLUniformLocation;
@@ -69,7 +69,14 @@ class App {
         this.projectionLocation = this.program.getUniformLocation(gl, 'u_projection');
 
         this.mesh = Mesh.CenteredCube(gl);
-        this.model = new Model(this.mesh, mat4.create());
+        for (let y = -4; y < 5; y++) {
+            for (let x = -4; x < 5; x++) {
+                const mat = mat4.create();
+                mat4.translate(mat, mat, vec3.fromValues(x * 1.2, y * 1.2, 0));
+                mat4.scale(mat, mat, vec3.fromValues(0.5,0.5,0.5));
+                this.models.push(new Model(this.mesh, mat));
+            }
+        }
         this.color = vec3.fromValues(.3,.5,.6);
         this.camera = new Camera();
         this.camera.position = vec3.fromValues(0,0,5);
@@ -101,9 +108,11 @@ class App {
 
         this.program.bind(gl);
         gl.uniformMatrix4fv(this.projectionLocation, false, viewProjection);
-        gl.uniformMatrix4fv(this.transformLocation, false, transform);
-
-        this.model.render(gl);
+        
+        this.models.forEach((model:Model) => {
+            gl.uniformMatrix4fv(this.transformLocation, false, model.transform);
+            model.render(gl);
+        });
 
         this.program.unbind(gl);
         requestAnimationFrame(this.Update.bind(this));
@@ -118,6 +127,7 @@ class App {
 
     public destroy() {
         const gl = this.gl;
+        this.models.length = 0;
         if (this.mesh) {
             this.mesh.delete();
         }
