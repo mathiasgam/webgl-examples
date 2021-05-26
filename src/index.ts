@@ -1,12 +1,15 @@
 import { vec3, mat4 } from "gl-matrix"
 import { Camera } from "./util/camera";
 import { Mesh } from "./util/mesh";
+import { Model } from "./util/Model";
 import { ShaderProgram } from "./util/ShaderProgram";
 
 class App {
 
     private program: ShaderProgram;
     private mesh: Mesh;
+
+    private model: Model;
 
     private transformLocation: WebGLUniformLocation;
     private projectionLocation: WebGLUniformLocation;
@@ -66,6 +69,7 @@ class App {
         this.projectionLocation = this.program.getUniformLocation(gl, 'u_projection');
 
         this.mesh = Mesh.CenteredCube(gl);
+        this.model = new Model(this.mesh, mat4.create());
         this.color = vec3.fromValues(.3,.5,.6);
         this.camera = new Camera();
         this.camera.position = vec3.fromValues(0,0,5);
@@ -99,16 +103,13 @@ class App {
         gl.uniformMatrix4fv(this.projectionLocation, false, viewProjection);
         gl.uniformMatrix4fv(this.transformLocation, false, transform);
 
-        this.mesh.bind();
-        gl.drawElements(WebGLRenderingContext.TRIANGLES, this.mesh.length, gl.UNSIGNED_INT, 0);
-        this.mesh.unbind();
+        this.model.render(gl);
 
         this.program.unbind(gl);
         requestAnimationFrame(this.Update.bind(this));
     }
 
     public onMouseMoved(e: MouseEvent): void {
-        console.log(e);
         if (e.buttons === 1) {
             this.moveX += e.movementX;
             this.moveY += e.movementY;
