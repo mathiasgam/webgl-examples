@@ -1,4 +1,5 @@
 import { vec3, mat4 } from "gl-matrix"
+import { Camera } from "./util/camera";
 import { Mesh } from "./util/mesh";
 import { ShaderProgram } from "./util/ShaderProgram";
 
@@ -14,8 +15,10 @@ class App {
     private t = 0;
     private color: vec3;
 
-    private width: number;
-    private height: number;
+    private moveX = 0;
+    private moveY = 0;
+
+    private camera: Camera;
 
     private readonly shader_prefix = `#version 300 es
     precision mediump float;`
@@ -47,7 +50,7 @@ class App {
         }
     }
 
-    public constructor(private gl: WebGL2RenderingContext, width: number, height: number) {
+    public constructor(private gl: WebGL2RenderingContext, private width: number, private height: number) {
 
         gl.enable(WebGLRenderingContext.DEPTH_TEST);
         gl.enable(WebGLRenderingContext.CULL_FACE)
@@ -64,6 +67,9 @@ class App {
 
         this.mesh = Mesh.CenteredCube(gl);
         this.color = vec3.fromValues(.3,.5,.6);
+        this.camera = new Camera();
+        this.camera.position = vec3.fromValues(0,0,5);
+        this.camera.fov = 70;
 
         this.width = width;
         this.height = height;
@@ -77,17 +83,14 @@ class App {
 
         this.t += delta;
 
-        const fov = (Math.PI / 180) * 70;
-        const projection = mat4.perspective(mat4.create(), fov, this.width / this.height, 0.1, 1000);
-        const view = mat4.lookAt(mat4.create(), vec3.fromValues(3,0,0), vec3.fromValues(0,0,0), vec3.fromValues(0,1,0));
-        const viewProjection = mat4.mul(mat4.create(), projection, view);
-        
+        this.camera.yaw += (1.68 / this.width) * this.moveX;
+        this.camera.pitch += (1.68 / this.height) * this.moveY;
 
+        this.moveX = 0;
+        this.moveY = 0;
+
+        const viewProjection = mat4.mul(mat4.create(), this.camera.projection, this.camera.view);
         const transform = mat4.create();
-        mat4.rotateX(transform, transform, this.t);
-        mat4.rotateY(transform, transform, this.t * 0.5);
-        mat4.rotateZ(transform, transform, this.t * 0.2);
-        // mat4.scale(transform, transform, vec3.fromValues(100, 100, 100));
 
         gl.clearColor(this.color[0], this.color[1], this.color[2], 1.0);
         gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
@@ -104,6 +107,14 @@ class App {
         requestAnimationFrame(this.Update.bind(this));
     }
 
+    public onMouseMoved(e: MouseEvent): void {
+        console.log(e);
+        if (e.buttons === 1) {
+            this.moveX += e.movementX;
+            this.moveY += e.movementY;
+        }
+    }
+
     public destroy() {
         const gl = this.gl;
         if (this.mesh) {
@@ -118,4 +129,7 @@ window.onload = () => {
     const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
     const app = new App(gl, canvas.width, canvas.height);
     requestAnimationFrame(app.Update.bind(app));
+
+    canvas.addEventListener('mousemove', app.onMouseMoved.bind(app));
 }
+
