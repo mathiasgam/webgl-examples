@@ -8228,8 +8228,8 @@ function () {
       if (this._viewChanged) {
         var res = gl_matrix_1.mat4.create();
         gl_matrix_1.mat4.translate(res, res, this._position);
-        gl_matrix_1.mat4.rotateX(res, res, this._pitch);
         gl_matrix_1.mat4.rotateY(res, res, this._yaw);
+        gl_matrix_1.mat4.rotateX(res, res, this._pitch);
         gl_matrix_1.mat4.invert(this._view, res);
         this._viewChanged = false;
       }
@@ -8466,6 +8466,7 @@ function () {
     this.gl = gl;
     this.width = width;
     this.height = height;
+    this.models = [];
     this.lastFrame = 0;
     this.t = 0;
     this.moveX = 0;
@@ -8483,7 +8484,16 @@ function () {
     this.transformLocation = this.program.getUniformLocation(gl, 'u_transform');
     this.projectionLocation = this.program.getUniformLocation(gl, 'u_projection');
     this.mesh = mesh_1.Mesh.CenteredCube(gl);
-    this.model = new Model_1.Model(this.mesh, gl_matrix_1.mat4.create());
+
+    for (var y = -4; y < 5; y++) {
+      for (var x = -4; x < 5; x++) {
+        var mat = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.translate(mat, mat, gl_matrix_1.vec3.fromValues(x * 1.2, y * 1.2, 0));
+        gl_matrix_1.mat4.scale(mat, mat, gl_matrix_1.vec3.fromValues(0.5, 0.5, 0.5));
+        this.models.push(new Model_1.Model(this.mesh, mat));
+      }
+    }
+
     this.color = gl_matrix_1.vec3.fromValues(.3, .5, .6);
     this.camera = new camera_1.Camera();
     this.camera.position = gl_matrix_1.vec3.fromValues(0, 0, 5);
@@ -8501,6 +8511,8 @@ function () {
   };
 
   App.prototype.Update = function (timestamp) {
+    var _this = this;
+
     var gl = this.gl;
     var delta = (timestamp - this.lastFrame) * 0.001;
     this.lastFrame = timestamp;
@@ -8515,8 +8527,10 @@ function () {
     gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
     this.program.bind(gl);
     gl.uniformMatrix4fv(this.projectionLocation, false, viewProjection);
-    gl.uniformMatrix4fv(this.transformLocation, false, transform);
-    this.model.render(gl);
+    this.models.forEach(function (model) {
+      gl.uniformMatrix4fv(_this.transformLocation, false, model.transform);
+      model.render(gl);
+    });
     this.program.unbind(gl);
     requestAnimationFrame(this.Update.bind(this));
   };
@@ -8530,6 +8544,7 @@ function () {
 
   App.prototype.destroy = function () {
     var gl = this.gl;
+    this.models.length = 0;
 
     if (this.mesh) {
       this.mesh.delete();
@@ -8576,7 +8591,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64200" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58926" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
