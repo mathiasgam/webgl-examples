@@ -291,7 +291,7 @@ function () {
 }();
 
 exports.ShaderProgram = ShaderProgram;
-},{}],"index.ts":[function(require,module,exports) {
+},{}],"GameOfLife/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -407,7 +407,7 @@ window.onload = function () {
   var app = new App(canvas);
   requestAnimationFrame(app.Update.bind(app));
 };
-},{"../util/mesh":"util/mesh.ts","../util/ShaderProgram":"util/ShaderProgram.ts"}],"../../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../util/mesh":"util/mesh.ts","../util/ShaderProgram":"util/ShaderProgram.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -435,7 +435,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53801" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53715" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -611,5 +611,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../../node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.ts"], null)
-//# sourceMappingURL=/gameOfLife.77de5100.js.map
+},{}]},{},["../node_modules/parcel-bundler/src/builtins/hmr-runtime.js","GameOfLife/index.ts"], null)
+//# sourceMappingURL=/GameOfLife.1caf8083.js.map
