@@ -1,3 +1,4 @@
+import { vec2 } from "gl-matrix";
 import { Mesh } from "../util/mesh";
 import { ShaderProgram } from "../util/ShaderProgram";
 
@@ -17,7 +18,7 @@ class App {
     uniform sampler2D u_texture;
 
     int get(ivec2 fragCoord, ivec2 offset) {
-        return int(texelFetch(u_texture, fragCoord + offset, 0).r);
+        return texelFetch(u_texture, fragCoord + offset, 0).r > 0.0 ? 1 : 0;
     }
 
     void main() {
@@ -42,10 +43,12 @@ class App {
 
     private static readonly vertex_blit = `
     layout(location = 0) in vec3 a_position;
+    uniform vec2 u_offset;
+    uniform vec2 u_scale;
     out vec2 uv;
     void main() {
         gl_Position = vec4(a_position.xyz, 1.0);
-        uv = a_position.xy * 0.5 + 0.5;
+        uv = (a_position.xy * 0.5 + 0.5) * u_scale + u_offset;
     }`
 
     private static readonly fragment_blit = `
@@ -53,7 +56,11 @@ class App {
     uniform sampler2D u_texture;
     in vec2 uv;
     void main() {
-        FragColor = texture(u_texture, uv);
+        if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+            FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        } else {
+            FragColor = texture(u_texture, uv);
+        }
     }`
 
     private program: ShaderProgram;
@@ -64,6 +71,9 @@ class App {
     private textureLocation: WebGLUniformLocation;
     private textureLocationBlit: WebGLUniformLocation;
 
+    private offsetLocation: WebGLUniformLocation;
+    private scaleLocation: WebGLUniformLocation;
+
     private programBlit: ShaderProgram;
 
     private quad: Mesh;
@@ -71,6 +81,11 @@ class App {
     private gl: WebGL2RenderingContext;
     private width: number;
     private height: number;
+
+    private scale: number = 1;
+    private x: number = 0;
+    private y: number = 0;
+    private isDrag: boolean = false;
 
     private createTexture(gl: WebGLRenderingContext, width: number, height: number): WebGLTexture {
         const texture = gl.createTexture();
@@ -131,6 +146,9 @@ class App {
         this.textureLocation = this.program.getUniformLocation(gl, 'u_texture');
         this.textureLocationBlit = this.programBlit.getUniformLocation(gl, 'u_texture');
 
+        this.scaleLocation = this.programBlit.getUniformLocation(gl, 'u_scale');
+        this.offsetLocation = this.programBlit.getUniformLocation(gl, 'u_offset');
+
         this.quad = Mesh.CenteredQuad(gl);
 
         this.textureTarget = this.createTexture(gl, this.width, this.height);
@@ -162,6 +180,8 @@ class App {
         this.programBlit.bind(this.gl);
         this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, this.textureSource);
         this.gl.uniform1i(this.textureLocationBlit, 0);
+        this.gl.uniform2fv(this.scaleLocation, vec2.fromValues(this.scale, this.scale));
+        this.gl.uniform2fv(this.offsetLocation, vec2.fromValues(this.x / this.width,this.y / this.height));
         this.gl.drawElements(WebGLRenderingContext.TRIANGLES, this.quad.length, WebGLRenderingContext.UNSIGNED_INT, 0);
         this.programBlit.unbind(this.gl);
         
@@ -174,6 +194,33 @@ class App {
         this.checkGLError(this.gl);
     }
 
+    public onMouseWheel(event: WheelEvent) {
+        this.scale = Math.min(2, Math.max(0.01, this.scale + this.scale * event.deltaY * 0.001));
+        const scaleLabel = document.getElementById('scale');
+        if (scaleLabel) {
+            scaleLabel.innerText = 'Scale: ' + this.scale.toFixed(2);
+        }
+    }
+
+    public onMouseMoved(event: MouseEvent) {
+        if (this.isDrag) {
+            this.x -= event.movementX * this.scale;
+            this.y += event.movementY * this.scale;
+            const offsetLabel = document.getElementById('offset');
+            if (offsetLabel) {
+                offsetLabel.innerText = 'Offset: ' + this.x.toFixed(2) + ', ' + this.y.toFixed(2);
+            }
+        }
+    }
+
+    public onMouseDown(event: MouseEvent) {
+        this.isDrag = true;
+    }
+
+    public onMouseUp(event: MouseEvent) {
+        this.isDrag = false;
+    }
+
 }
 
 window.onload = () => {
@@ -183,4 +230,8 @@ window.onload = () => {
     canvas.height = canvas.clientHeight;
     const app = new App(canvas);
     requestAnimationFrame(app.Update.bind(app));
+    canvas.addEventListener('wheel', app.onMouseWheel.bind(app));
+    canvas.addEventListener('mousemove', app.onMouseMoved.bind(app));
+    canvas.addEventListener('mousedown', app.onMouseDown.bind(app));
+    canvas.addEventListener('mouseup', app.onMouseUp.bind(app));
 }
